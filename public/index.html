@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus - Desktop Portal</title>
+    <style>
+        :root {
+            --bg-color: #fdfaf5;
+            --text-dark: #2d2d2d;
+            --primary-orange: #ff7a59;
+            --card-personality: #ffbba7;
+            --card-career: #aed9ff;
+            --card-stress: #f0e2ca;
+            --card-mentality: #dcb3e6;
+    
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            padding: 40px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 60px;
+        }
+
+        /* Top Navigation Style Header */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo-icon {
+            width: 50px;
+            height: 50px;
+            background: #fff;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+
+        .brand-name {
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        /* Hero Section: Split Layout for Laptop */
+        .hero {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 40px;
+        }
+
+        .hero-text {
+            flex: 1;
+            text-align: left;
+        }
+
+        .hero-text h1 {
+            font-size: 3.5rem;
+            margin: 0 0 20px 0;
+            line-height: 1.1;
+        }
+
+        .hero-visual {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            position: relative;
+        }
+
+        .mascot-img {
+            width: 300px;
+            height: auto;
+            filter: drop-shadow(0 20px 30px rgba(0,0,0,0.05));
+        }
+
+        /* Grid Layout: 4 Columns for Laptop */
+        .cards-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 25px;
+        }
+
+        .card {
+            padding: 30px 20px;
+            border-radius: 24px;
+            text-decoration: none;
+            color: #444;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.04);
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.08);
+        }
+
+        .card-icon {
+            font-size: 40px;
+            margin-bottom: 20px;
+            background: rgba(255,255,255,0.4);
+            width: 70px;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+
+        .card-title {
+            font-weight: 700;
+            font-size: 1.1rem;
+            line-height: 1.3;
+        }
+
+        /* Color Coding from Image 2 */
+        .personality { background-color: var(--card-personality); }
+        .career      { background-color: var(--card-career); }
+        .stress      { background-color: var(--card-stress); }
+        .mentality   { background-color: var(--card-mentality); }
+       
+
+        /* Login Button matching Image 1 */
+        .login-btn {
+            background-color: #0c68c9;
+            color: white;
+            padding: 12px 35px;
+            border-radius: 30px;
+            font-weight: bold;
+            text-decoration: none;
+        }
+        .profile-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: white;
+    padding: 8px 15px;
+    border-radius: 50px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end; /* Aligns text to the right side of the icon */
+}
+
+.user-name-small {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #2d3436;
+    margin: 0;
+}
+
+.logout-link {
+    font-size: 0.75rem;
+    color: #ff7a59; /* Your primary orange color */
+    text-decoration: none;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.logout-link:hover {
+    text-decoration: underline;
+}
+
+        /* ---------- RESPONSIVE: fluid type + spacing on any screen ---------- */
+        .brand-name { font-size: clamp(16px, 2.2vw, 24px); }
+        .hero-text h1 { font-size: clamp(2rem, 5.5vw, 3.5rem); }
+        .hero-text p { font-size: clamp(1rem, 2vw, 1.2rem); }
+        .container { padding: clamp(20px, 4vw, 40px) 20px; gap: clamp(30px, 5vw, 60px); }
+        .mascot-img { width: clamp(160px, 30vw, 300px); }
+
+        /* Tablet: 2-column card grid, hero keeps side-by-side but tighter */
+        @media (max-width: 900px) {
+            .cards-container { grid-template-columns: repeat(2, 1fr); }
+            .hero { gap: 24px; }
+        }
+
+        /* Phone: stack everything, full-width nav, single-column cards */
+        @media (max-width: 600px) {
+            header { flex-wrap: wrap; gap: 15px; }
+            .hero { flex-direction: column-reverse; text-align: center; }
+            .hero-text { text-align: center; }
+            .hero-text p { margin: 0 auto; }
+            .cards-container { grid-template-columns: 1fr; }
+            .card { padding: 22px 16px; }
+            .profile-group { padding: 6px 10px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <div class="logo-section">
+                <div class="logo-icon"><img src="images/logo.jpeg" alt="Nexus logo" width="60" height="auto"></div>
+                <div class="brand-name">NEXUS</div>
+            </div>
+<div id="auth-section">
+            <a href="login.html" class="login-btn">Login</a>
+</div>
+        </header>
+
+        <main class="hero">
+            <div class="hero-text">
+                <h1>Connect Your Mind.<br><span style="color: var(--primary-orange);">Shape Your Future.</span></h1>
+                <p style="font-size: 1.2rem; opacity: 0.8; max-width: 500px;">
+                    A personalized counseling companion powered by your unique traits and goals.
+                </p>
+            </div>
+            <div class="hero-visual">
+                <img src="images/illustration.png" alt="Nexus Character" class="mascot-img">
+            </div>
+        </main>
+
+</header>
+
+<script>
+
+
+(function(){if(!window.chatbase||window.chatbase("getState")!=="initialized"){window.chatbase=(...arguments)=>{if(!window.chatbase.q){window.chatbase.q=[]}window.chatbase.q.push(arguments)};window.chatbase=new Proxy(window.chatbase,{get(target,prop){if(prop==="q"){return target.q}return(...args)=>target(prop,...args)}})}const onLoad=function(){const script=document.createElement("script");script.src="https://www.chatbase.co/embed.min.js";script.id="SpKauJzdvsmA4Dry1EXNo";script.domain="www.chatbase.co";document.body.appendChild(script)};if(document.readyState==="complete"){onLoad()}else{window.addEventListener("load",onLoad)}})();
+
+
+
+    window.onload = function() {
+        const email = localStorage.getItem('nexus_user');
+        const name = localStorage.getItem('nexus_name') || "User";
+        const pic = localStorage.getItem('nexus_pic');
+        const authSection = document.getElementById('auth-section');
+
+        // Check if user is logged in
+        if (email) {
+            let iconHtml = '';
+            
+            // 1. Generate Avatar (Photo or Letter)
+            if (pic && pic !== "null") {
+                iconHtml = `<img src="${pic}" style="width: 40px; height: 40px; border-radius: 50%; border: 2px solid #6c5ce7;">`;
+            } else {
+                const firstLetter = name.charAt(0).toUpperCase();
+                iconHtml = `<div style="width: 40px; height: 40px; border-radius: 50%; background: #6c5ce7; 
+                            color: white; display: flex; align-items: center; justify-content: center; 
+                            font-weight: bold; border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                            ${firstLetter}</div>`;
+            }
+
+            // 2. Insert Name, Logout Link, and Icon into the auth-section
+            authSection.innerHTML = `
+                <div class="profile-group">
+                    <div class="user-info">
+                        <p class="user-name-small">${name}</p>
+                        <a class="logout-link" onclick="handleLogout()">Logout</a>
+                    </div>
+                    ${iconHtml}
+                </div>
+            `;
+        } else {
+            // If not logged in, show the default login button
+            authSection.innerHTML = `<a href="login.html" class="login-btn">Login</a>`;
+        }
+    };
+
+    // The Logout Function
+    function handleLogout() {
+        if (confirm("Are you sure you want to logout?")) {
+            localStorage.clear();
+            window.location.href = 'login.html';
+        }
+    }
+</script>
+
+
+        <section class="cards-container">
+            <a href="mbti.html" class="card personality">
+                <div class="card-icon">🔍</div>
+                <div class="card-title">Personality<br>Assessment</div>
+            </a>
+            <a href="aptitude.html" class="card career">
+                <div class="card-icon">🤓</div>
+                <div class="card-title">IQ <br> Assessment</div>
+            </a>
+            <a href="stress.html" class="card stress">
+                <div class="card-icon">🧘</div>
+                <div class="card-title">Stress<br>Management</div>
+            </a>
+            <a href="report.html" class="card mentality">
+                <div class="card-icon">🧠</div>
+                <div class="card-title">Mentality<br>Insights</div>
+            </a>
+
+        </section>
+    </div>
+
+</body>
+</html>

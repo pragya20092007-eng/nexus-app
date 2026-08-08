@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus | Personality Discovery</title>
+    <style>
+        :root {
+            --bg: #f0f2f5;
+            --card: #ffffff;
+            --primary: #6c5ce7;
+            --text: #2d3436;
+        }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); display: flex; justify-content: center; padding: 40px 20px; }
+        .quiz-container { max-width: 600px; width: 100%; background: var(--card); padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+        h2 { color: var(--primary); text-align: center; }
+        .sub-header { text-align: center; color: #636e72; margin-bottom: 30px; font-size: 0.9rem; }
+
+        .question { margin-bottom: 25px; display: none; }
+        .question.active { display: block; }
+        .options { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+        
+        button.opt { background: #f8f9fa; border: 2px solid #eee; padding: 15px; border-radius: 12px; cursor: pointer; text-align: left; transition: 0.3s; font-size: 1rem; }
+        button.opt:hover, button.opt.selected { border-color: var(--primary); background: #f0edff; }
+        
+        #submit-area { display: none; text-align: center; margin-top: 20px; }
+        .btn-submit { background: var(--primary); color: white; border: none; padding: 15px 40px; border-radius: 25px; font-size: 1.1rem; cursor: pointer; transition: 0.3s; }
+        .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(108, 92, 231, 0.4); }
+
+        #result { display: none; text-align: center; }
+        .type-code { font-size: 3.5rem; font-weight: bold; color: var(--primary); margin: 10px 0; }
+        .redirect-msg { font-style: italic; color: #636e72; margin-top: 20px; }
+        
+        .progress-bar { height: 8px; background: #eee; border-radius: 4px; margin-bottom: 20px; overflow: hidden; }
+        .progress { height: 100%; background: var(--primary); width: 10%; transition: 0.3s; }
+    
+        @media (max-width: 480px) {
+            body { padding: 20px 12px; }
+            .quiz-container { padding: 20px 18px; border-radius: 16px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="quiz-container">
+    <div id="quiz-ui">
+        <h2>Nexus Personality Test</h2>
+        <p class="sub-header">"Zindagi is full of choices, and you've made yours!"</p>
+        <div class="progress-bar"><div class="progress" id="progress"></div></div>
+        
+        <div id="questions-container">
+            </div>
+
+        <div id="submit-area">
+            <p>All questions answered! Ready to see your results?</p>
+            <button class="btn-submit" onclick="showResult()">Submit & View Result</button>
+        </div>
+    </div>
+
+    <div id="result">
+        <h2>Your Personality Type:</h2>
+        <div class="type-code" id="type-display"></div>
+        <p id="type-desc"></p>
+        <hr>
+        <p class="redirect-msg">Thank you! Redirecting to Nexus home in <span id="timer">5</span> seconds...</p>
+    </div>
+</div>
+
+<script>
+    const questions = [
+        { q: "After a long week, how do you recharge?", a: "Hanging out with friends (E)", b: "Quiet time alone (I)", axis: "EI" },
+        { q: "When solving a problem, do you rely more on:", a: "Past experience and facts (S)", b: "Intuition and possibilities (N)", axis: "SN" },
+        { q: "When making a tough decision, what matters most?", a: "Logic and consistency (T)", b: "Impact on people/feelings (F)", axis: "TF" },
+        { q: "How do you prefer to work?", a: "Strict deadlines and lists (J)", b: "Flexible and spontaneous (P)", axis: "JP" },
+        { q: "In a social gathering, are you usually:", a: "The life of the party (E)", b: "Conversing with a few people (I)", axis: "EI" },
+        { q: "Do you focus more on:", a: "The present reality (S)", b: "Future potential (N)", axis: "SN" },
+        { q: "Others describe you as:", a: "Level-headed and cool (T)", b: "Warm and sensitive (F)", axis: "TF" },
+        { q: "Is your room/desk usually:", a: "Neat and organized (J)", b: "A bit of a 'creative' mess (P)", axis: "JP" },
+        { q: "Which sounds better?", a: "A planned itinerary (J)", b: "No plans, just seeing where the day goes (P)", axis: "JP" },
+        { q: "Do you prefer ideas that are:", a: "Practical and applicable (S)", b: "Abstract and theoretical (N)", axis: "SN" }
+    ];
+
+    let currentIdx = 0;
+    let scores = { E: 0, I: 0, S: 0, N: 0, T: 0, F: 0, J: 0, P: 0 };
+
+    function initQuiz() {
+        const container = document.getElementById('questions-container');
+        questions.forEach((item, index) => {
+            const div = document.createElement('div');
+            div.className = `question ${index === 0 ? 'active' : ''}`;
+            div.id = `q-${index}`;
+            div.innerHTML = `
+                <p><strong>Question ${index + 1} of 10:</strong></p>
+                <p>${item.q}</p>
+                <div class="options">
+                    <button class="opt" onclick="saveAnswer('${item.axis[0]}', ${index})">${item.a}</button>
+                    <button class="opt" onclick="saveAnswer('${item.axis[1]}', ${index})">${item.b}</button>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    function saveAnswer(choice, index) {
+        scores[choice]++;
+        const currentQ = document.getElementById(`q-${index}`);
+        currentQ.classList.remove('active');
+        
+        currentIdx++;
+        if (currentIdx < questions.length) {
+            const nextQ = document.getElementById(`q-${currentIdx}`);
+            nextQ.classList.add('active');
+            document.getElementById('progress').style.width = ((currentIdx + 1) * 10) + "%";
+        } else {
+            // All questions done - show submit button
+            document.getElementById('progress').style.width = "100%";
+            document.getElementById('submit-area').style.display = 'block';
+        }
+    }
+
+    function showResult() {
+        document.getElementById('quiz-ui').style.display = 'none';
+        const resDiv = document.getElementById('result');
+        resDiv.style.display = 'block';
+
+        const type = 
+            (scores.E >= scores.I ? "E" : "I") +
+            (scores.S >= scores.N ? "S" : "N") +
+            (scores.T >= scores.F ? "T" : "F") +
+            (scores.J >= scores.P ? "J" : "P");
+
+        document.getElementById('type-display').textContent = type;
+        document.getElementById('type-desc').textContent = `You are a ${type}. Take this result back to Nexus to discuss your career path!`;
+// SAVE TO STORAGE
+    localStorage.setItem('nexus_mbti', type); 
+
+    document.getElementById('type-display').textContent = type;
+    // ...
+
+
+        startRedirectTimer();
+    }
+
+    function startRedirectTimer() {
+        let timeLeft = 5;
+        const timerSpan = document.getElementById('timer');
+        
+        const interval = setInterval(() => {
+            timeLeft--;
+            timerSpan.textContent = timeLeft;
+            if (timeLeft <= 0) {
+                clearInterval(interval);
+                window.location.href = "index.html"; // Shifts to home page
+            }
+        }, 1000);
+    }
+
+    initQuiz();
+</script>
+
+</body>
+</html>

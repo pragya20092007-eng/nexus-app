@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus | Stress Deep-Dive</title>
+    <style>
+        :root {
+            --bg: #fdfcfb;
+            --card: #ffffff;
+            --primary: #6c5ce7;
+            --stress-high: #ff7675;
+            --text: #2d3436;
+        }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); display: flex; justify-content: center; padding: 40px 20px; }
+        .quiz-container { max-width: 600px; width: 100%; background: var(--card); padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); }
+        h2 { color: var(--primary); text-align: center; margin-bottom: 5px; }
+        .sub-header { text-align: center; color: #636e72; margin-bottom: 30px; font-size: 0.9rem; }
+        
+        .question { margin-bottom: 25px; display: none; }
+        .question.active { display: block; }
+        
+        .options { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+        .check-opt { display: flex; align-items: center; background: #f8f9fa; border: 2px solid #eee; padding: 15px; border-radius: 12px; cursor: pointer; transition: 0.3s; }
+        .check-opt:hover { border-color: var(--primary); background: #f0edff; }
+        .check-opt input { margin-right: 15px; transform: scale(1.2); }
+
+        .btn-next { background: var(--primary); color: white; border: none; padding: 12px 30px; border-radius: 25px; margin-top: 20px; cursor: pointer; float: right; font-weight: bold; }
+        
+        #submit-area { display: none; text-align: center; margin-top: 20px; clear: both; }
+        .btn-submit { background: var(--primary); color: white; border: none; padding: 15px 40px; border-radius: 25px; font-size: 1.1rem; cursor: pointer; }
+
+        #result { display: none; text-align: center; }
+        .score-circle { width: 100px; height: 100px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: bold; margin: 20px auto; }
+        .redirect-msg { font-style: italic; color: #636e72; margin-top: 20px; }
+        
+        .progress-bar { height: 8px; background: #eee; border-radius: 4px; margin-bottom: 20px; overflow: hidden; }
+        .progress { height: 100%; background: var(--primary); width: 10%; transition: 0.3s; }
+        .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; color: white; margin-bottom: 10px; text-transform: uppercase; font-weight: bold; }
+    
+        @media (max-width: 480px) {
+            body { padding: 20px 12px; }
+            .quiz-container { padding: 20px 18px; border-radius: 16px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="quiz-container">
+    <div id="quiz-ui">
+        <h2>Stress Analysis</h2>
+        <p class="sub-header">"Don't be a prisoner of your own past. It was just a lesson, not a life sentence."</p>
+        <div class="progress-bar"><div class="progress" id="progress"></div></div>
+        
+        <div id="questions-container"></div>
+
+        <div id="submit-area">
+            <button class="btn-submit" onclick="showResult()">View Stress Profile</button>
+        </div>
+    </div>
+
+    <div id="result">
+        <h2>Your Results</h2>
+        <div class="score-circle" id="final-score">0</div>
+        <p id="stress-advice" style="font-weight: 500; padding: 0 20px;"></p>
+        <p class="redirect-msg">Shifting back to Nexus in <span id="timer">5</span> seconds...</p>
+    </div>
+</div>
+
+<script>
+    const questions = [
+        { 
+            q: "When you have a tight deadline, how do you honestly feel? (Select all that apply)", 
+            tag: "Situational",
+            opts: [
+                { val: "I feel completely in control and organized", pts: -2 },
+                { val: "I feel like I'm losing my grip on things", pts: 3 },
+                { val: "I feel nervous and physically tense", pts: 2 },
+                { val: "I feel paralyzed and unable to start", pts: 4 }
+            ] 
+        },
+        { 
+            q: "When someone criticizes your work unexpectedly:", 
+            tag: "Situational",
+            opts: [
+                { val: "I get upset and can't shake it off", pts: 3 },
+                { val: "I feel angered because it's out of my control", pts: 2 },
+                { val: "I handle it confidently and move on", pts: -2 },
+                { val: "I feel like difficulties are piling up", pts: 4 }
+            ] 
+        },
+        { 
+            q: "Looking at your current daily habits:", 
+            tag: "Behavioral",
+            opts: [
+                { val: "I struggle to cope with basic tasks", pts: 4 },
+                { val: "I feel I'm 'on top of things'", pts: -3 },
+                { val: "I snap or get irritated easily", pts: 2 },
+                { val: "I feel nervous about the next thing to happen", pts: 3 }
+            ] 
+        },
+        { 
+            q: "When unexpected problems pop up during the day:", 
+            tag: "Behavioral",
+            opts: [
+                { val: "I feel I cannot control the important things", pts: 3 },
+                { val: "I feel confident I can solve them", pts: -2 },
+                { val: "I feel overwhelmed by the extra weight", pts: 4 },
+                { val: "I just 'go with the flow' calmly", pts: -3 }
+            ] 
+        },
+        { 
+            q: "Thinking about your inner emotional state lately:", 
+            tag: "Reflective",
+            opts: [
+                { val: "I feel things are going my way", pts: -3 },
+                { val: "I feel difficulties are too high to overcome", pts: 4 },
+                { val: "I feel unable to control my irritations", pts: 3 },
+                { val: "I feel a constant sense of nervousness", pts: 2 }
+            ] 
+        }
+    ];
+
+    let currentIdx = 0;
+    let totalScore = 15; // Starting with a base middle-score to allow for negative (positive) deductions
+
+    function initQuiz() {
+        const container = document.getElementById('questions-container');
+        questions.forEach((item, index) => {
+            const div = document.createElement('div');
+            div.className = `question ${index === 0 ? 'active' : ''}`;
+            div.id = `q-${index}`;
+            div.innerHTML = `
+                <span class="badge" style="background: var(--primary)">${item.tag}</span>
+                <p><strong>Question ${index + 1}:</strong> ${item.q}</p>
+                <div class="options">
+                    ${item.opts.map((o, i) => `
+                        <label class="check-opt">
+                            <input type="checkbox" name="q-${index}" value="${o.pts}"> ${o.val}
+                        </label>
+                    `).join('')}
+                </div>
+                <button class="btn-next" onclick="next(${index})">${index === questions.length - 1 ? 'Finish' : 'Next'}</button>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    function next(idx) {
+        const selected = document.querySelectorAll(`input[name="q-${idx}"]:checked`);
+        if (selected.length === 0) {
+            alert("Pick at least one option, yaar!");
+            return;
+        }
+
+        selected.forEach(s => {
+            totalScore += parseInt(s.value);
+        });
+
+        // Clamp score between 0 and 40 (standard PSS range)
+        if (totalScore < 0) totalScore = 0;
+        if (totalScore > 40) totalScore = 40;
+
+        document.getElementById(`q-${idx}`).classList.remove('active');
+        currentIdx++;
+
+        if (currentIdx < questions.length) {
+            document.getElementById(`q-${currentIdx}`).classList.add('active');
+            document.getElementById('progress').style.width = ((currentIdx + 1) * (100 / questions.length)) + "%";
+        } else {
+            document.getElementById('progress').style.width = "100%";
+            document.getElementById('submit-area').style.display = 'block';
+        }
+    }
+
+    function showResult() {
+        document.getElementById('quiz-ui').style.display = 'none';
+        document.getElementById('result').style.display = 'block';
+        document.getElementById('final-score').textContent = totalScore;
+        
+        let advice = "";
+        if (totalScore <= 13) {
+            advice = "Low Stress. You're like the ocean—calm even when the wind blows. Keep riding the waves!";
+        } else if (totalScore <= 26) {
+            advice = "Moderate Stress. Your glass is getting full, yaar. Time to pour some out and breathe.";
+        } else {
+            advice = "High Stress. You're carrying the world on your shoulders. Nexus is here—let's unpack this together.";
+        }
+
+        document.getElementById('stress-advice').textContent = advice;
+        localStorage.setItem('nexus_stress', totalScore);
+
+        let timeLeft = 5;
+        const timerSpan = document.getElementById('timer');
+        const interval = setInterval(() => {
+            timeLeft--;
+            timerSpan.textContent = timeLeft;
+            if (timeLeft <= 0) {
+                clearInterval(interval);
+                window.location.href = "index.html"; 
+            }
+        }, 1000);
+    }
+
+    initQuiz();
+</script>
+
+</body>
+</html>

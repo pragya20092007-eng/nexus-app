@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus | Executive Summary</title>
+    <style>
+        :root {
+            --primary: #6c5ce7;
+            --secondary: #a29bfe;
+            --bg: #f4f7f6;
+            --text: #2d3436;
+            --white: #ffffff;
+            --success: #00b894;
+            --warning: #fdcb6e;
+            --danger: #d63031;
+        }
+
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 40px 20px; }
+        .report-container { max-width: 900px; margin: 0 auto; background: var(--white); padding: 40px; border-radius: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.05); }
+        header { text-align: center; border-bottom: 2px solid #eee; padding-bottom: 20px; margin-bottom: 30px; }
+        h1 { color: var(--primary); margin: 0; font-size: 2.2rem; }
+        .date { color: #636e72; font-size: 0.9rem; margin-top: 5px; }
+
+        .results-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 40px; }
+        @media (max-width: 600px) {
+            body { padding: 20px 12px; }
+            .report-container { padding: 22px 18px; border-radius: 18px; }
+            .results-grid { grid-template-columns: 1fr; gap: 14px; }
+            h1 { font-size: 1.6rem; }
+        }
+        .result-card { background: #f8f9fa; padding: 25px; border-radius: 20px; text-align: center; border: 1px solid #eee; }
+        .result-card h3 { margin: 0 0 10px 0; font-size: 1rem; color: #636e72; text-transform: uppercase; }
+        .value { font-size: 1.8rem; font-weight: bold; color: var(--primary); }
+
+        .career-section { background: #f0f3ff; padding: 30px; border-radius: 25px; border: 1px dashed var(--primary); text-align: center; }
+        .career-path-box { margin-top: 15px; font-style: italic; color: #4b4b4b; }
+        
+        .btn-ask { 
+            background: var(--primary); color: white; border: none; padding: 12px 25px; 
+            border-radius: 30px; cursor: pointer; font-size: 1rem; font-weight: 600;
+            margin-top: 15px; transition: transform 0.2s;
+        }
+        .btn-ask:hover { transform: scale(1.05); }
+    </style>
+
+  <script>
+(function(){if(!window.chatbase||window.chatbase("getState")!=="initialized"){window.chatbase=(...arguments)=>{if(!window.chatbase.q){window.chatbase.q=[]}window.chatbase.q.push(arguments)};window.chatbase=new Proxy(window.chatbase,{get(target,prop){if(prop==="q"){return target.q}return(...args)=>target(prop,...args)}})}const onLoad=function(){const script=document.createElement("script");script.src="https://www.chatbase.co/embed.min.js";script.id="SpKauJzdvsmA4Dry1EXNo";script.domain="www.chatbase.co";document.body.appendChild(script)};if(document.readyState==="complete"){onLoad()}else{window.addEventListener("load",onLoad)}})();
+</script>
+</head>
+<body>
+
+<div class="report-container">
+    <header>
+        <h1>Executive Summary</h1>
+        <div class="date" id="date-stamp"></div>
+    </header>
+
+    <div class="results-grid">
+        <div class="result-card">
+            <h3>Personality Type</h3>
+            <div class="value" id="mbti-val">Loading...</div>
+        </div>
+        <div class="result-card">
+            <h3>Aptitude Score</h3>
+            <div class="value" id="iq-val">Loading...</div>
+        </div>
+        <div class="result-card">
+            <h3>Stress Level</h3>
+            <div class="value" id="stress-val">Loading...</div>
+        </div>
+    </div>
+
+    <div class="career-section">
+        <h2>AI Career Roadmap</h2>
+        <div class="career-path-box" id="career-text">
+            Nexus is ready to analyze your scores and provide a personalized roadmap.
+        </div>
+        <button class="btn-ask" onclick="askNexusViaWidget()">✨ Ask Nexus for Roadmap</button>
+    </div>
+</div>
+
+<script>
+    window.onload = function() {
+        // 1. Set Date
+        document.getElementById('date-stamp').textContent = new Date().toLocaleDateString(undefined, { 
+            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+        });
+
+        // 2. Fetch Data
+        const mbti = localStorage.getItem('nexus_mbti') || "Not Taken";
+        const iqRaw = localStorage.getItem('nexus_iq');
+        const stressRaw = localStorage.getItem('nexus_stress');
+
+        // 3. Update MBTI
+        document.getElementById('mbti-val').textContent = mbti;
+
+        // 4. Update IQ
+        const iqEl = document.getElementById('iq-val');
+        if (iqRaw) {
+            iqEl.textContent = iqRaw + "/5";
+            iqEl.style.color = parseInt(iqRaw) >= 3 ? "var(--success)" : "var(--danger)";
+        } else {
+            iqEl.textContent = "N/A";
+        }
+
+        // 5. Update Stress
+        const stressEl = document.getElementById('stress-val');
+        if (stressRaw) {
+            const s = parseInt(stressRaw);
+            if (s <= 13) { stressEl.textContent = "Low"; stressEl.style.color = "var(--success)"; }
+            else if (s <= 26) { stressEl.textContent = "Mid"; stressEl.style.color = "var(--warning)"; }
+            else { stressEl.textContent = "High"; stressEl.style.color = "var(--danger)"; }
+        } else {
+            stressEl.textContent = "N/A";
+        }
+    };
+
+    // Chatbot function using only the Embed Script logic
+    function askNexusViaWidget() {
+        const mbti = localStorage.getItem('nexus_mbti') || "Not Taken";
+        const iq = localStorage.getItem('nexus_iq') || "Not Taken";
+        const stress = localStorage.getItem('nexus_stress') || "Not Taken";
+
+        const msg = `Hi Nexus! Based on my results, give me a career roadmap. My MBTI is ${mbti}, IQ is ${iq}/5, and Stress is ${stress}/40. Recommend 3 paths.`;
+
+        if (window.chatbase) {
+            window.chatbase("open"); // Opens the bubble
+            window.chatbase("sendUserMessage", msg); // Automatically sends the results
+        } else {
+            alert("The chatbot is still loading. Please try again in a moment.");
+        }
+    }
+</script>
+
+</body>
+</html>

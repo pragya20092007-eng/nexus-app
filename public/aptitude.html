@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus | Aptitude & Ambition</title>
+    <style>
+        :root {
+            --bg: #f8f9fd;
+            --card: #ffffff;
+            --primary: #6c5ce7;
+            --iq-accent: #00cec9;
+            --career-accent: #fdcb6e;
+            --text: #2d3436;
+        }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); display: flex; justify-content: center; padding: 40px 20px; }
+        .quiz-container { max-width: 600px; width: 100%; background: var(--card); padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        h2 { color: var(--primary); text-align: center; margin-bottom: 5px; }
+        .sub-header { text-align: center; color: #636e72; margin-bottom: 30px; font-size: 0.9rem; }
+        
+        .question { margin-bottom: 25px; display: none; }
+        .question.active { display: block; }
+        
+        /* Input Styles */
+        .input-area { margin-top: 20px; }
+        input[type="text"] { width: 100%; padding: 15px; border: 2px solid #eee; border-radius: 12px; font-size: 1rem; outline: none; transition: 0.3s; box-sizing: border-box; }
+        input[type="text"]:focus { border-color: var(--primary); }
+        
+        /* Checkbox Styles */
+        .checkbox-group { display: grid; gap: 10px; margin-top: 20px; }
+        .check-opt { display: flex; align-items: center; background: #f8f9fa; border: 2px solid #eee; padding: 12px; border-radius: 12px; cursor: pointer; transition: 0.3s; }
+        .check-opt:hover { background: #f0edff; }
+        .check-opt input { margin-right: 15px; transform: scale(1.2); }
+
+        .btn-next { background: var(--primary); color: white; border: none; padding: 12px 30px; border-radius: 25px; margin-top: 20px; cursor: pointer; float: right; }
+        
+        #submit-area { display: none; text-align: center; margin-top: 20px; clear: both; }
+        .btn-submit { background: var(--primary); color: white; border: none; padding: 15px 40px; border-radius: 25px; font-size: 1.1rem; cursor: pointer; transition: 0.3s; }
+        
+        #result { display: none; text-align: center; }
+        .analysis-card { background: #f1f2f6; padding: 20px; border-radius: 15px; margin: 20px 0; text-align: left; border-left: 5px solid var(--primary); }
+        .redirect-msg { font-style: italic; color: #636e72; margin-top: 20px; }
+        
+        .progress-bar { height: 8px; background: #eee; border-radius: 4px; margin-bottom: 20px; overflow: hidden; }
+        .progress { height: 100%; background: var(--primary); width: 10%; transition: 0.3s; }
+        .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; color: white; margin-bottom: 10px; text-transform: uppercase; font-weight: bold; }
+    
+        @media (max-width: 480px) {
+            body { padding: 20px 12px; }
+            .quiz-container { padding: 20px 18px; border-radius: 16px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="quiz-container">
+    <div id="quiz-ui">
+        <h2>Aptitude & Ambition</h2>
+        <p class="sub-header">"Don't let the past kidnap your future." </p>
+        <div class="progress-bar"><div class="progress" id="progress"></div></div>
+        
+        <div id="questions-container"></div>
+
+        <div id="submit-area">
+            <button class="btn-submit" onclick="showResult()">Generate Career Profile</button>
+        </div>
+    </div>
+
+    <div id="result">
+        <h2>Nexus Career Profile</h2>
+        <div class="analysis-card">
+            <p><strong>Logic Score:</strong> <span id="iq-res"></span>/5</p>
+            <p><strong>Your Vibe:</strong> <span id="career-vibe"></span></p>
+        </div>
+        <p>I’ve calculated your strengths. Let's find your dream role.</p>
+        <p class="redirect-msg">Returning home in <span id="timer">5</span> seconds...</p>
+    </div>
+</div>
+
+<script>
+    const questions = [
+        // IQ / Logic Questions (Text Box)
+        { q: "Which number comes next: 2, 4, 8, 16, ...?", correct: "32", type: "iq" },
+        { q: "If all Bloops are Razzies and all Razzies are Lazzies, are all Bloops definitely Lazzies? (Yes/No)", correct: "yes", type: "iq" },
+        { q: "Which word does NOT belong: Vision, Ear, Sight, Touch?", correct: "ear", type: "iq" },
+        { q: "A bat and a ball cost $1.10. The bat costs $1.00 more than the ball. How many cents is the ball?", correct: "5", type: "iq" },
+        { q: "What is the 3D version of a square called?", correct: "cube", type: "iq" },
+        
+        // Career Interest Questions (Checkbox)
+        { 
+            q: "When you have a free Sunday, what pulls you in? (Select all that apply)", 
+            type: "career", 
+            opts: [
+                { val: "Breaking things down to see how they work", cat: "Analytical" },
+                { val: "Organizing a group hangout or trip", cat: "Leadership" },
+                { val: "Getting lost in a creative project", cat: "Creative" }
+            ] 
+        },
+        { 
+            q: "What kind of 'vibe' makes you feel alive?", 
+            type: "career", 
+            opts: [
+                { val: "Deep focus in a quiet corner", cat: "Specialist" },
+                { val: "The energy of a brainstorming session", cat: "Collaborator" },
+                { val: "The thrill of a high-stakes challenge", cat: "Commercial" }
+            ] 
+        },
+        { 
+            q: "What's your 'superpower' in a group?", 
+            type: "career", 
+            opts: [
+                { val: "I spot the errors everyone missed", cat: "Technical" },
+                { val: "I keep the peace and mediate", cat: "Humanitarian" },
+                { val: "I make the final decisions", cat: "Executive" }
+            ] 
+        },
+        { 
+            q: "If your life was a movie, what's your role?", 
+            type: "career", 
+            opts: [
+                { val: "The Architect behind the scenes", cat: "Specialist" },
+                { val: "The Hero leading the charge", cat: "Executive" },
+                { val: "The Explorer seeking new horizons", cat: "Adaptive" }
+            ] 
+        },
+        { 
+            q: "What does 'success' look like to you?", 
+            type: "career", 
+            opts: [
+                { val: "Stability and a clear structure", cat: "Structured" },
+                { val: "Freedom to change and evolve", cat: "Adaptive" },
+                { val: "Creating something that lasts", cat: "Creative" }
+            ] 
+        }
+    ];
+
+    let currentIdx = 0;
+    let iqScore = 0;
+    let interestTally = {};
+
+    function initQuiz() {
+        const container = document.getElementById('questions-container');
+        questions.forEach((item, index) => {
+            const isIQ = item.type === "iq";
+            const div = document.createElement('div');
+            div.className = `question ${index === 0 ? 'active' : ''}`;
+            div.id = `q-${index}`;
+            
+            let inputHtml = '';
+            if (isIQ) {
+                inputHtml = `<div class="input-area">
+                                <input type="text" id="ans-${index}" placeholder="Type your answer here...">
+                             </div>`;
+            } else {
+                inputHtml = `<div class="checkbox-group">
+                                ${item.opts.map((o, i) => `
+                                    <label class="check-opt">
+                                        <input type="checkbox" name="q-${index}" value="${o.cat}"> ${o.val}
+                                    </label>
+                                `).join('')}
+                             </div>`;
+            }
+
+            div.innerHTML = `
+                <span class="badge" style="background:${isIQ ? 'var(--iq-accent)' : 'var(--career-accent)'}">
+                    ${isIQ ? 'Logic Check' : 'The Vibe Check'}
+                </span>
+                <p><strong>${index + 1}.</strong> ${item.q}</p>
+                ${inputHtml}
+                <button class="btn-next" onclick="next(${index})">${index === questions.length - 1 ? 'Finish' : 'Next'}</button>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    function next(idx) {
+        const q = questions[idx];
+        if (q.type === "iq") {
+            const userVal = document.getElementById(`ans-${idx}`).value.trim().toLowerCase();
+            if (userVal === q.correct) iqScore++;
+        } else {
+            const selected = document.querySelectorAll(`input[name="q-${idx}"]:checked`);
+            selected.forEach(s => {
+                interestTally[s.value] = (interestTally[s.value] || 0) + 1;
+            });
+        }
+
+        document.getElementById(`q-${idx}`).classList.remove('active');
+        currentIdx++;
+
+        if (currentIdx < questions.length) {
+            document.getElementById(`q-${currentIdx}`).classList.add('active');
+            document.getElementById('progress').style.width = ((currentIdx + 1) * 10) + "%";
+        } else {
+            document.getElementById('progress').style.width = "100%";
+            document.getElementById('submit-area').style.display = 'block';
+        }
+    }
+
+    function showResult() {
+        document.getElementById('quiz-ui').style.display = 'none';
+        document.getElementById('result').style.display = 'block';
+        document.getElementById('iq-res').textContent = iqScore;
+        
+        let topCat = "Soul Searcher";
+        if(Object.keys(interestTally).length > 0) {
+            topCat = Object.keys(interestTally).reduce((a, b) => interestTally[a] > interestTally[b] ? a : b);
+        }
+        document.getElementById('career-vibe').textContent = topCat;
+
+        localStorage.setItem('nexus_iq', iqScore); 
+
+        let timeLeft = 5;
+        const timerSpan = document.getElementById('timer');
+        const interval = setInterval(() => {
+            timeLeft--;
+            timerSpan.textContent = timeLeft;
+            if (timeLeft <= 0) {
+                clearInterval(interval);
+                 window.location.href ="index.html"; 
+            }
+        }, 1000);
+    }
+
+    initQuiz();
+</script>
+
+</body>
+</html>
